@@ -2,6 +2,14 @@
 
 Play any YouTube video's storyboard as a colored ASCII art animation, right in your terminal.
 
+## Demo
+
+`ytterm` playing [*Just Dance Vance*](https://youtube.com/shorts/S2GC9PxDWPI) by NostromoCore as truecolor half-block art:
+
+![ytterm playing Just Dance Vance in the terminal](assets/demo.gif)
+
+> The demo is rendered from the video's public storyboard frames — the same low-resolution seek-bar previews `ytterm` fetches at runtime. That's why it's pixelated: it's ~1 frame per second of source, blown up into terminal blocks. See [Subject isolation](#subject-isolation) for the `--isolate` flag that drops the background.
+
 ## How it works
 
 YouTube exposes publicly accessible **storyboard images** — the little preview thumbnails you see when hovering over the seek bar. `ytterm` fetches those from YouTube at runtime, slices them into frames, converts them to ANSI-colored character art, and animates them in your terminal.
