@@ -23,16 +23,27 @@ pip install Pillow
 
 python3 ytterm.py https://www.youtube.com/watch?v=VIDEO_ID
 python3 ytterm.py https://www.youtube.com/shorts/VIDEO_ID --fps 10
+```
 
-# render as real ASCII text characters
-python3 ytterm.py URL --ascii --charset standard
+### The best-looking example
 
-# smoother motion + a crisper picture
-python3 ytterm.py URL --interpolate 3 --upscale 2 --sharpen
+Everything turned up at once — smooth interpolated motion, an upscaled and sharpened source, punchier color, and the detailed ASCII ramp at a high frame rate:
 
-# isolate just the person from the background (transparent terminal bg)
+```bash
+python3 ytterm.py https://youtube.com/shorts/S2GC9PxDWPI \
+    --ascii --charset standard \
+    --interpolate 4 --upscale 2 --sharpen \
+    --saturation 1.3 --contrast 1.1 \
+    --fps 24
+```
+
+Prefer colored blocks over text? Swap `--ascii --charset standard` for `--renderer chafa` (or just drop those flags to auto-detect chafa). To drop the background entirely and loop just the dancer:
+
+```bash
 pip install rembg onnxruntime
-python3 ytterm.py URL --isolate --alpha-matting --feather 1.5
+python3 ytterm.py https://youtube.com/shorts/S2GC9PxDWPI \
+    --isolate --alpha-matting --feather 1.5 \
+    --interpolate 4 --upscale 2 --fps 24
 ```
 
 Press **Ctrl+C** to stop.
