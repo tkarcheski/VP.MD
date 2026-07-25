@@ -13,11 +13,13 @@ runtime, on your machine, from the same public endpoint your browser uses.
 Usage:
     python3 ytterm.py https://www.youtube.com/watch?v=VIDEO_ID
     python3 ytterm.py https://www.youtube.com/shorts/VIDEO_ID --fps 8 --width 100
+    python3 ytterm.py URL --isolate            # isolate the largest foreground subject
 
 Requirements:
     - Python 3.8+
     - Pillow  (pip install Pillow)
     - chafa   (optional, used automatically for higher-quality rendering)
+    - rembg   (optional, only needed for --isolate:  pip install rembg onnxruntime)
 
 Press Ctrl+C to stop.
 """
@@ -39,6 +41,8 @@ try:
 except ImportError:
     print("Pillow is required: pip install Pillow", file=sys.stderr)
     sys.exit(1)
+
+# rembg is only imported lazily inside isolate_subject().
 
 UA = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -175,26 +179,118 @@ def download_frames(sb: dict, level_idx: int = -1, max_images: int = 50) -> list
 
 
 # --------------------------------------------------------------------------
+# Subject isolation
+# --------------------------------------------------------------------------
+
+_REMBG_SESSION = None
+
+
+def _get_rembg_session(model: str = "u2net_human_seg"):
+    """Lazy-load a rembg session. u2net_human_seg is tuned for people."""
+    global _REMBG_SESSION
+    if _REMBG_SESSION is not None:
+        return _REMBG_SESSION
+    try:
+        from rembg import new_session  # type: ignore
+    except ImportError as e:
+        raise RuntimeError(
+            "--isolate requires rembg. Install with: pip install rembg onnxruntime"
+        ) from e
+    _REMBG_SESSION = new_session(model)
+    return _REMBG_SESSION
+
+
+def _largest_component_mask(alpha: Image.Image) -> Image.Image:
+    """
+    Keep only the largest connected foreground blob in an alpha mask.
+    Ensures we isolate *one* subject, not scattered background noise.
+    Pure-Pillow flood-fill BFS — no numpy/scipy required.
+    """
+    w, h = alpha.size
+    px = alpha.load()
+    # Binarize
+    thresh = 128
+    visited = bytearray(w * h)
+    best_pixels: list = []
+    best_size = 0
+
+    for start_y in range(h):
+        for start_x in range(w):
+            idx0 = start_y * w + start_x
+            if visited[idx0] or px[start_x, start_y] < thresh:
+                continue
+            # BFS
+            stack = [(start_x, start_y)]
+            pixels = []
+            visited[idx0] = 1
+            while stack:
+                x, y = stack.pop()
+                pixels.append((x, y))
+                for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                    nx, ny = x + dx, y + dy
+                    if 0 <= nx < w and 0 <= ny < h:
+                        nidx = ny * w + nx
+                        if not visited[nidx] and px[nx, ny] >= thresh:
+                            visited[nidx] = 1
+                            stack.append((nx, ny))
+            if len(pixels) > best_size:
+                best_size = len(pixels)
+                best_pixels = pixels
+
+    if not best_pixels:
+        return alpha
+
+    out = Image.new("L", (w, h), 0)
+    op = out.load()
+    for x, y in best_pixels:
+        op[x, y] = px[x, y]  # keep original soft alpha for this blob
+    return out
+
+
+def isolate_subject(frame: Image.Image, keep_largest: bool = True) -> Image.Image:
+    """
+    Remove background from `frame` using rembg's human-segmentation model.
+    Returns an RGBA image where non-subject pixels have alpha=0.
+    """
+    from rembg import remove  # type: ignore
+    session = _get_rembg_session("u2net_human_seg")
+    result = remove(frame.convert("RGB"), session=session).convert("RGBA")
+    if keep_largest:
+        r, g, b, a = result.split()
+        a = _largest_component_mask(a)
+        result = Image.merge("RGBA", (r, g, b, a))
+    return result
+
+
+# --------------------------------------------------------------------------
 # Rendering
 # --------------------------------------------------------------------------
 
 def render_chafa(frame: Image.Image, width: int, height: int) -> str:
-    """Render via chafa (best quality)."""
+    """Render via chafa (best quality). Preserves alpha if present."""
     buf = io.BytesIO()
     frame.save(buf, format="PNG")
-    result = subprocess.run(
-        ["chafa", "--colors=240", "--symbols=block+border+space",
-         f"--size={width}x{height}", "-"],
-        input=buf.getvalue(), capture_output=True,
-    )
+    cmd = ["chafa", "--colors=240", "--symbols=block+border+space",
+           f"--size={width}x{height}"]
+    if frame.mode == "RGBA":
+        cmd += ["--bg=none"]
+    cmd.append("-")
+    result = subprocess.run(cmd, input=buf.getvalue(), capture_output=True)
     if result.returncode != 0:
         raise RuntimeError(result.stderr.decode()[:200])
     return result.stdout.decode()
 
 
 def render_halfblock(frame: Image.Image, width: int, height: int) -> str:
-    """Built-in truecolor renderer using U+2580 half blocks (no chafa needed)."""
-    # each text row shows two pixel rows
+    """
+    Built-in truecolor renderer using U+2580 half blocks (no chafa needed).
+    Honors RGBA alpha: fully-transparent pixels render as a plain space so
+    the terminal background shows through.
+    """
+    has_alpha = frame.mode == "RGBA"
+    if not has_alpha:
+        frame = frame.convert("RGB")
+
     px_h = height * 2
     src_w, src_h = frame.size
     scale = min(width / src_w, px_h / src_h)
@@ -207,24 +303,52 @@ def render_halfblock(frame: Image.Image, width: int, height: int) -> str:
     for y in range(0, h, 2):
         row = []
         for x in range(w):
-            r1, g1, b1 = px[x, y]
-            r2, g2, b2 = px[x, y + 1]
-            row.append(f"\x1b[38;2;{r1};{g1};{b1}m\x1b[48;2;{r2};{g2};{b2}m\u2580")
+            if has_alpha:
+                r1, g1, b1, a1 = px[x, y]
+                r2, g2, b2, a2 = px[x, y + 1]
+            else:
+                r1, g1, b1 = px[x, y]
+                r2, g2, b2 = px[x, y + 1]
+                a1 = a2 = 255
+
+            top_vis = a1 >= 128
+            bot_vis = a2 >= 128
+
+            if not top_vis and not bot_vis:
+                row.append("\x1b[0m ")
+            elif top_vis and bot_vis:
+                row.append(
+                    f"\x1b[38;2;{r1};{g1};{b1}m\x1b[48;2;{r2};{g2};{b2}m\u2580"
+                )
+            elif top_vis:
+                # top pixel visible, bottom transparent → upper half block, no bg
+                row.append(f"\x1b[0m\x1b[38;2;{r1};{g1};{b1}m\u2580")
+            else:
+                # bottom pixel visible, top transparent → lower half block, no bg
+                row.append(f"\x1b[0m\x1b[38;2;{r2};{g2};{b2}m\u2584")
         row.append("\x1b[0m")
         lines.append("".join(row))
     return "\n".join(lines)
 
 
-def render_frames(frames: list, width: int, height: int, use_chafa: bool) -> list:
+def render_frames(
+    frames: list,
+    width: int,
+    height: int,
+    use_chafa: bool,
+    isolate: bool = False,
+) -> list:
     rendered = []
     total = len(frames)
     for i, frame in enumerate(frames):
-        sys.stderr.write(f"\rRendering frame {i + 1}/{total}...")
+        label = "Isolating" if isolate else "Rendering"
+        sys.stderr.write(f"\r{label} frame {i + 1}/{total}...")
         sys.stderr.flush()
+        img = isolate_subject(frame) if isolate else frame
         if use_chafa:
-            rendered.append(render_chafa(frame, width, height))
+            rendered.append(render_chafa(img, width, height))
         else:
-            rendered.append(render_halfblock(frame, width, height))
+            rendered.append(render_halfblock(img, width, height))
     sys.stderr.write("\n")
     return rendered
 
@@ -275,6 +399,9 @@ def main():
     parser.add_argument("--no-loop", action="store_true", help="play once and exit")
     parser.add_argument("--no-chafa", action="store_true",
                         help="force built-in renderer even if chafa is installed")
+    parser.add_argument("--isolate", action="store_true",
+                        help="remove the background and keep only the largest "
+                             "foreground person/subject (requires rembg)")
     args = parser.parse_args()
 
     term = shutil.get_terminal_size((80, 42))
@@ -300,8 +427,11 @@ def main():
     print(f"Extracted {len(frames)} frames.")
 
     use_chafa = (not args.no_chafa) and shutil.which("chafa") is not None
-    print(f"Renderer: {'chafa' if use_chafa else 'built-in half-block'}")
-    rendered = render_frames(frames, width, height, use_chafa)
+    print(f"Renderer: {'chafa' if use_chafa else 'built-in half-block'}"
+          + (" + subject isolation (rembg)" if args.isolate else ""))
+    if args.isolate:
+        _get_rembg_session()  # trigger model download up-front with progress
+    rendered = render_frames(frames, width, height, use_chafa, isolate=args.isolate)
 
     play(rendered, meta, fps=args.fps, loop=not args.no_loop)
 

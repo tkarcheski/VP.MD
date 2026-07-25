@@ -15,6 +15,10 @@ pip install Pillow
 
 python3 ytterm.py https://www.youtube.com/watch?v=VIDEO_ID
 python3 ytterm.py https://www.youtube.com/shorts/VIDEO_ID --fps 10
+
+# isolate just the person from the background (transparent terminal bg)
+pip install rembg onnxruntime
+python3 ytterm.py URL --isolate
 ```
 
 Press **Ctrl+C** to stop.
@@ -29,6 +33,13 @@ Press **Ctrl+C** to stop.
 | `--level N` | Storyboard quality level (0 = lowest) | highest available |
 | `--no-loop` | Play once and exit | loops forever |
 | `--no-chafa` | Force the built-in renderer | uses chafa if installed |
+| `--isolate` | Remove background, keep only the largest person/subject | off |
+
+## Subject isolation
+
+With `--isolate`, each frame is run through [rembg](https://github.com/danielgatis/rembg)'s human-segmentation model (U²-Net). The largest connected foreground blob is kept and everything else becomes transparent, so the terminal background shows through and you see just the subject looping.
+
+First run downloads the model (~176 MB) to `~/.u2net/`. Subsequent runs are instant.
 
 ## Rendering
 
@@ -42,6 +53,7 @@ Two renderers are supported:
 - Python 3.8+
 - [Pillow](https://pypi.org/project/Pillow/) (`pip install Pillow`)
 - [chafa](https://hpjansson.org/chafa/) (optional, for nicer output)
+- [rembg](https://pypi.org/project/rembg/) + onnxruntime (optional, only for `--isolate`)
 
 ## Notes & limitations
 
