@@ -13,12 +13,15 @@ runtime, on your machine, from the same public endpoint your browser uses.
 Usage:
     python3 ytterm.py https://www.youtube.com/watch?v=VIDEO_ID
     python3 ytterm.py https://www.youtube.com/shorts/VIDEO_ID --fps 8 --width 100
-    python3 ytterm.py URL --isolate            # isolate the largest foreground subject
+    python3 ytterm.py URL --ascii                  # render as true ASCII characters
+    python3 ytterm.py URL --interpolate 3          # 3x smoother: synthesize in-between frames
+    python3 ytterm.py URL --upscale 2 --sharpen    # crisper, higher-quality frames
+    python3 ytterm.py URL --isolate --alpha-matting --feather 1.5   # clean subject cutout
 
 Requirements:
     - Python 3.8+
     - Pillow  (pip install Pillow)
-    - chafa   (optional, used automatically for higher-quality rendering)
+    - chafa   (optional, used automatically for higher-quality block rendering)
     - rembg   (optional, only needed for --isolate:  pip install rembg onnxruntime)
 
 Press Ctrl+C to stop.
@@ -37,7 +40,7 @@ import urllib.parse
 import urllib.request
 
 try:
-    from PIL import Image
+    from PIL import Image, ImageFilter, ImageEnhance
 except ImportError:
     print("Pillow is required: pip install Pillow", file=sys.stderr)
     sys.exit(1)
@@ -48,6 +51,14 @@ UA = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 )
+
+# ASCII luminance ramps, ordered dark -> light. Longer ramps carry more tonal
+# detail; "blocks" uses Unicode shade blocks for a denser, higher-quality look.
+ASCII_RAMPS = {
+    "simple":   " .:-=+*#%@",
+    "standard": " .'`^\",:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$",
+    "blocks":   " ░▒▓█",
+}
 
 
 # --------------------------------------------------------------------------
@@ -138,8 +149,13 @@ def parse_storyboard_spec(spec: str) -> dict:
     return {"base_url": base_url, "levels": levels}
 
 
-def download_frames(sb: dict, level_idx: int = -1, max_images: int = 50) -> list:
-    """Download storyboard images for a level and slice into PIL frames."""
+def download_frames(sb: dict, level_idx: int = -1, max_images: int = 100) -> list:
+    """Download storyboard images for a level and slice into PIL frames.
+
+    The highest level (the default) packs the most tiles per image and the
+    largest tile resolution, so it yields both the most frames and the best
+    quality source material.
+    """
     levels = sb["levels"]
     if not levels:
         raise RuntimeError("No storyboard levels available.")
@@ -179,16 +195,72 @@ def download_frames(sb: dict, level_idx: int = -1, max_images: int = 50) -> list
 
 
 # --------------------------------------------------------------------------
+# Frame enhancement:  more frames + higher quality
+# --------------------------------------------------------------------------
+
+def enhance_frames(frames: list, upscale: float = 1.0, sharpen: bool = False,
+                   contrast: float = 1.0, saturation: float = 1.0) -> list:
+    """Upscale (LANCZOS), sharpen and punch up frames for a crisper look.
+
+    Storyboards are tiny, so a gentle LANCZOS upscale plus an unsharp mask
+    recovers a surprising amount of apparent detail before the frames are
+    knocked down to character cells.
+    """
+    if upscale <= 1.0 and not sharpen and contrast == 1.0 and saturation == 1.0:
+        return frames
+    out = []
+    for fr in frames:
+        img = fr
+        if upscale > 1.0:
+            w, h = img.size
+            img = img.resize((max(1, int(w * upscale)),
+                              max(1, int(h * upscale))), Image.LANCZOS)
+        if contrast != 1.0:
+            img = ImageEnhance.Contrast(img).enhance(contrast)
+        if saturation != 1.0:
+            img = ImageEnhance.Color(img).enhance(saturation)
+        if sharpen:
+            img = img.filter(ImageFilter.UnsharpMask(radius=2, percent=120,
+                                                     threshold=2))
+        out.append(img)
+    return out
+
+
+def interpolate_frames(frames: list, factor: int) -> list:
+    """Synthesize `factor - 1` crossfaded frames between each pair of source
+    frames, multiplying the effective frame count for smoother motion.
+
+    Storyboards are ~1 fps, so this is what turns a slideshow into animation.
+    A linear crossfade is cheap and, for the small motions between adjacent
+    seek-bar previews, reads as convincing in-between motion.
+    """
+    if factor <= 1 or len(frames) < 2:
+        return frames
+    out = []
+    for i in range(len(frames) - 1):
+        a = frames[i].convert("RGB")
+        b = frames[i + 1].convert("RGB")
+        if a.size != b.size:
+            b = b.resize(a.size, Image.LANCZOS)
+        out.append(frames[i])
+        for k in range(1, factor):
+            out.append(Image.blend(a, b, k / factor))
+    out.append(frames[-1])
+    return out
+
+
+# --------------------------------------------------------------------------
 # Subject isolation
 # --------------------------------------------------------------------------
 
 _REMBG_SESSION = None
+_REMBG_MODEL = None
 
 
 def _get_rembg_session(model: str = "u2net_human_seg"):
     """Lazy-load a rembg session. u2net_human_seg is tuned for people."""
-    global _REMBG_SESSION
-    if _REMBG_SESSION is not None:
+    global _REMBG_SESSION, _REMBG_MODEL
+    if _REMBG_SESSION is not None and _REMBG_MODEL == model:
         return _REMBG_SESSION
     try:
         from rembg import new_session  # type: ignore
@@ -197,6 +269,7 @@ def _get_rembg_session(model: str = "u2net_human_seg"):
             "--isolate requires rembg. Install with: pip install rembg onnxruntime"
         ) from e
     _REMBG_SESSION = new_session(model)
+    _REMBG_MODEL = model
     return _REMBG_SESSION
 
 
@@ -247,17 +320,34 @@ def _largest_component_mask(alpha: Image.Image) -> Image.Image:
     return out
 
 
-def isolate_subject(frame: Image.Image, keep_largest: bool = True) -> Image.Image:
+def isolate_subject(frame: Image.Image, keep_largest: bool = True,
+                    model: str = "u2net_human_seg",
+                    alpha_matting: bool = False, feather: float = 0.0) -> Image.Image:
     """
-    Remove background from `frame` using rembg's human-segmentation model.
+    Remove background from `frame` using a rembg segmentation model.
     Returns an RGBA image where non-subject pixels have alpha=0.
+
+    alpha_matting refines the cutout edge (great for hair/soft edges); feather
+    applies a small Gaussian blur to the alpha channel so the isolated subject
+    composites onto the terminal background without a hard, aliased fringe.
     """
     from rembg import remove  # type: ignore
-    session = _get_rembg_session("u2net_human_seg")
-    result = remove(frame.convert("RGB"), session=session).convert("RGBA")
-    if keep_largest:
+    session = _get_rembg_session(model)
+    kwargs = {}
+    if alpha_matting:
+        kwargs.update(
+            alpha_matting=True,
+            alpha_matting_foreground_threshold=240,
+            alpha_matting_background_threshold=10,
+            alpha_matting_erode_size=10,
+        )
+    result = remove(frame.convert("RGB"), session=session, **kwargs).convert("RGBA")
+    if keep_largest or feather > 0:
         r, g, b, a = result.split()
-        a = _largest_component_mask(a)
+        if keep_largest:
+            a = _largest_component_mask(a)
+        if feather > 0:
+            a = a.filter(ImageFilter.GaussianBlur(feather))
         result = Image.merge("RGBA", (r, g, b, a))
     return result
 
@@ -270,14 +360,23 @@ def render_chafa(frame: Image.Image, width: int, height: int) -> str:
     """Render via chafa (best quality). Preserves alpha if present."""
     buf = io.BytesIO()
     frame.save(buf, format="PNG")
-    cmd = ["chafa", "--colors=240", "--symbols=block+border+space",
-           f"--size={width}x{height}"]
+    cmd = ["chafa", "--colors=full", "--symbols=block+border+space",
+           "--dither=ordered", f"--size={width}x{height}"]
     if frame.mode == "RGBA":
         cmd += ["--bg=none"]
     cmd.append("-")
     result = subprocess.run(cmd, input=buf.getvalue(), capture_output=True)
     if result.returncode != 0:
-        raise RuntimeError(result.stderr.decode()[:200])
+        # Older chafa builds reject --colors=full / --dither; retry conservatively.
+        cmd_fallback = ["chafa", "--colors=240",
+                        "--symbols=block+border+space", f"--size={width}x{height}"]
+        if frame.mode == "RGBA":
+            cmd_fallback += ["--bg=none"]
+        cmd_fallback.append("-")
+        result = subprocess.run(cmd_fallback, input=buf.getvalue(),
+                                capture_output=True)
+        if result.returncode != 0:
+            raise RuntimeError(result.stderr.decode()[:200])
     return result.stdout.decode()
 
 
@@ -296,7 +395,7 @@ def render_halfblock(frame: Image.Image, width: int, height: int) -> str:
     scale = min(width / src_w, px_h / src_h)
     w = max(1, int(src_w * scale))
     h = max(2, int(src_h * scale) // 2 * 2)
-    img = frame.resize((w, h))
+    img = frame.resize((w, h), Image.LANCZOS)
     px = img.load()
 
     lines = []
@@ -318,15 +417,61 @@ def render_halfblock(frame: Image.Image, width: int, height: int) -> str:
                 row.append("\x1b[0m ")
             elif top_vis and bot_vis:
                 row.append(
-                    f"\x1b[38;2;{r1};{g1};{b1}m\x1b[48;2;{r2};{g2};{b2}m\u2580"
+                    f"\x1b[38;2;{r1};{g1};{b1}m\x1b[48;2;{r2};{g2};{b2}m▀"
                 )
             elif top_vis:
                 # top pixel visible, bottom transparent → upper half block, no bg
-                row.append(f"\x1b[0m\x1b[38;2;{r1};{g1};{b1}m\u2580")
+                row.append(f"\x1b[0m\x1b[38;2;{r1};{g1};{b1}m▀")
             else:
                 # bottom pixel visible, top transparent → lower half block, no bg
-                row.append(f"\x1b[0m\x1b[38;2;{r2};{g2};{b2}m\u2584")
+                row.append(f"\x1b[0m\x1b[38;2;{r2};{g2};{b2}m▄")
         row.append("\x1b[0m")
+        lines.append("".join(row))
+    return "\n".join(lines)
+
+
+def render_ascii(frame: Image.Image, width: int, height: int,
+                 ramp: str = ASCII_RAMPS["standard"], color: bool = True) -> str:
+    """
+    Built-in ASCII renderer: maps each cell's luminance to a character from a
+    dark→light ramp, optionally tinted with the cell's truecolor.
+
+    This is the "real ASCII" look — text glyphs, not blocks. Terminal cells are
+    about twice as tall as they are wide, so the image is sampled at half the
+    vertical rate to keep the aspect ratio correct.
+    """
+    has_alpha = frame.mode == "RGBA"
+    if not has_alpha:
+        frame = frame.convert("RGB")
+
+    cell_aspect = 0.5  # width/height of a character cell
+    src_w, src_h = frame.size
+    scale = min(width / src_w, height / (src_h * cell_aspect))
+    w = max(1, int(src_w * scale))
+    h = max(1, int(src_h * scale * cell_aspect))
+    img = frame.resize((w, h), Image.LANCZOS)
+    px = img.load()
+
+    n = len(ramp) - 1
+    lines = []
+    for y in range(h):
+        row = []
+        for x in range(w):
+            if has_alpha:
+                r, g, b, a = px[x, y]
+                if a < 128:
+                    row.append(" ")
+                    continue
+            else:
+                r, g, b = px[x, y]
+            lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255.0
+            ch = ramp[max(0, min(n, int(lum * n + 0.5)))]
+            if color:
+                row.append(f"\x1b[38;2;{r};{g};{b}m{ch}")
+            else:
+                row.append(ch)
+        if color:
+            row.append("\x1b[0m")
         lines.append("".join(row))
     return "\n".join(lines)
 
@@ -335,18 +480,24 @@ def render_frames(
     frames: list,
     width: int,
     height: int,
-    use_chafa: bool,
+    renderer: str,
+    ramp: str = ASCII_RAMPS["standard"],
+    color: bool = True,
     isolate: bool = False,
+    isolate_opts: dict = None,
 ) -> list:
+    isolate_opts = isolate_opts or {}
     rendered = []
     total = len(frames)
     for i, frame in enumerate(frames):
         label = "Isolating" if isolate else "Rendering"
         sys.stderr.write(f"\r{label} frame {i + 1}/{total}...")
         sys.stderr.flush()
-        img = isolate_subject(frame) if isolate else frame
-        if use_chafa:
+        img = isolate_subject(frame, **isolate_opts) if isolate else frame
+        if renderer == "chafa":
             rendered.append(render_chafa(img, width, height))
+        elif renderer == "ascii":
+            rendered.append(render_ascii(img, width, height, ramp=ramp, color=color))
         else:
             rendered.append(render_halfblock(img, width, height))
     sys.stderr.write("\n")
@@ -396,13 +547,71 @@ def main():
                         help="output height in rows (default: terminal height)")
     parser.add_argument("--level", type=int, default=-1,
                         help="storyboard quality level (default: highest)")
+    parser.add_argument("--max-images", type=int, default=100,
+                        help="max storyboard tile images to fetch (default: 100)")
     parser.add_argument("--no-loop", action="store_true", help="play once and exit")
+
+    # Renderer selection ----------------------------------------------------
+    parser.add_argument("--renderer", choices=["auto", "chafa", "halfblock", "ascii"],
+                        default="auto",
+                        help="rendering backend (default: auto — chafa if installed, "
+                             "else half-block)")
+    parser.add_argument("--ascii", dest="ascii_mode", action="store_true",
+                        help="shortcut for --renderer ascii (true ASCII characters)")
+    parser.add_argument("--charset", choices=list(ASCII_RAMPS.keys()),
+                        default="standard",
+                        help="ASCII ramp for --ascii (default: standard)")
+    parser.add_argument("--no-color", action="store_true",
+                        help="monochrome output for the ASCII renderer")
     parser.add_argument("--no-chafa", action="store_true",
-                        help="force built-in renderer even if chafa is installed")
+                        help="force the built-in renderer even if chafa is installed")
+
+    # Quality / more frames -------------------------------------------------
+    parser.add_argument("--interpolate", type=int, default=1, metavar="N",
+                        help="synthesize N frames per source frame for smoother "
+                             "motion (default: 1 = off; try 2-4)")
+    parser.add_argument("--upscale", type=float, default=1.0, metavar="F",
+                        help="LANCZOS-upscale source frames by factor F before "
+                             "rendering, for a crisper image (default: 1.0)")
+    parser.add_argument("--sharpen", action="store_true",
+                        help="apply an unsharp mask to recover apparent detail")
+    parser.add_argument("--contrast", type=float, default=1.0,
+                        help="contrast multiplier (1.0 = unchanged)")
+    parser.add_argument("--saturation", type=float, default=1.0,
+                        help="color saturation multiplier (1.0 = unchanged)")
+
+    # Subject isolation -----------------------------------------------------
     parser.add_argument("--isolate", action="store_true",
                         help="remove the background and keep only the largest "
                              "foreground person/subject (requires rembg)")
+    parser.add_argument("--isolate-model", default="u2net_human_seg",
+                        help="rembg model for --isolate (e.g. u2net, u2netp, "
+                             "isnet-general-use; default: u2net_human_seg)")
+    parser.add_argument("--alpha-matting", action="store_true",
+                        help="refine isolation edges with alpha matting "
+                             "(cleaner hair/soft edges; slower)")
+    parser.add_argument("--feather", type=float, default=0.0, metavar="R",
+                        help="feather the isolation mask edge by Gaussian radius R "
+                             "for smoother compositing (default: 0)")
+    parser.add_argument("--keep-all", action="store_true",
+                        help="with --isolate, keep every foreground blob instead "
+                             "of only the largest subject")
     args = parser.parse_args()
+
+    # Resolve renderer choice, honoring the legacy flags.
+    if args.ascii_mode:
+        renderer = "ascii"
+    elif args.renderer != "auto":
+        renderer = args.renderer
+    elif args.no_chafa:
+        renderer = "halfblock"
+    else:
+        renderer = "chafa" if shutil.which("chafa") is not None else "halfblock"
+
+    if renderer == "chafa" and shutil.which("chafa") is None:
+        print("chafa not found on PATH; falling back to the built-in half-block "
+              "renderer.", file=sys.stderr)
+        renderer = "halfblock"
 
     term = shutil.get_terminal_size((80, 42))
     width = args.width or term.columns
@@ -423,15 +632,42 @@ def main():
                       for l in sb["levels"]))
 
     print("Downloading frames...")
-    frames = download_frames(sb, level_idx=args.level)
-    print(f"Extracted {len(frames)} frames.")
+    frames = download_frames(sb, level_idx=args.level, max_images=args.max_images)
+    print(f"Extracted {len(frames)} source frames.")
 
-    use_chafa = (not args.no_chafa) and shutil.which("chafa") is not None
-    print(f"Renderer: {'chafa' if use_chafa else 'built-in half-block'}"
+    # Higher quality: upscale / sharpen / grade before rendering.
+    frames = enhance_frames(frames, upscale=args.upscale, sharpen=args.sharpen,
+                            contrast=args.contrast, saturation=args.saturation)
+
+    # More frames: synthesize in-between frames for smoother motion.
+    if args.interpolate > 1:
+        before = len(frames)
+        frames = interpolate_frames(frames, args.interpolate)
+        print(f"Interpolated {before} -> {len(frames)} frames "
+              f"({args.interpolate}x).")
+
+    renderer_label = {
+        "chafa": "chafa (block/border, truecolor)",
+        "halfblock": "built-in half-block (truecolor)",
+        "ascii": f"built-in ASCII ({args.charset} ramp)",
+    }[renderer]
+    print(f"Renderer: {renderer_label}"
           + (" + subject isolation (rembg)" if args.isolate else ""))
+
+    isolate_opts = {
+        "keep_largest": not args.keep_all,
+        "model": args.isolate_model,
+        "alpha_matting": args.alpha_matting,
+        "feather": args.feather,
+    }
     if args.isolate:
-        _get_rembg_session()  # trigger model download up-front with progress
-    rendered = render_frames(frames, width, height, use_chafa, isolate=args.isolate)
+        _get_rembg_session(args.isolate_model)  # trigger model download up-front
+
+    rendered = render_frames(
+        frames, width, height, renderer,
+        ramp=ASCII_RAMPS[args.charset], color=not args.no_color,
+        isolate=args.isolate, isolate_opts=isolate_opts,
+    )
 
     play(rendered, meta, fps=args.fps, loop=not args.no_loop)
 
