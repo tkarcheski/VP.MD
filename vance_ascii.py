@@ -25,6 +25,7 @@ import time
 from pathlib import Path
 
 from generators import scrape_youtube
+from generators.ascii_generator import generate_and_save
 
 # Lazy imports for optional dependencies
 PIL = None
@@ -129,28 +130,42 @@ def image_to_ascii(image_path, width=None, height=None, charset="standard"):
 
 
 def animate_frames(frames_dir, fps=12, loop=True, width=None, height=None, charset="standard"):
-    """Play ASCII frames in terminal with animation."""
+    """Play ASCII frames in terminal with animation (supports image and text frames)."""
     frames_path = Path(frames_dir)
-    frames = sorted(frames_path.glob("*.png")) + sorted(frames_path.glob("*.jpg"))
 
-    if not frames:
+    # Look for either image files (.png, .jpg) or text files (.txt)
+    image_frames = sorted(frames_path.glob("*.png")) + sorted(frames_path.glob("*.jpg"))
+    text_frames = sorted(frames_path.glob("*.txt"))
+
+    # Use whichever type we found
+    if text_frames:
+        frames = text_frames
+        is_text = True
+    elif image_frames:
+        frames = image_frames
+        is_text = False
+    else:
         print(f"No frames found in {frames_dir}", file=sys.stderr)
         sys.exit(1)
 
     frame_delay = 1.0 / fps
-    loop_count = 0
+    frame_count = len(frames)
+    print(f"Playing {frame_count} frames at {fps} FPS")
 
     try:
         while loop:
-            loop_count += 1
             for frame_path in frames:
                 # Clear screen (VT-100 style)
                 print("\033[2J\033[H", end="", flush=True)
 
                 # Render frame
-                ascii_art = image_to_ascii(str(frame_path), width, height, charset)
-                print(ascii_art, flush=True)
+                if is_text:
+                    # Safe: frames are generated internally by ascii_generator, not from untrusted input
+                    ascii_art = frame_path.read_text()
+                else:
+                    ascii_art = image_to_ascii(str(frame_path), width, height, charset)
 
+                print(ascii_art, flush=True)
                 time.sleep(frame_delay)
 
             if not loop:
@@ -174,9 +189,12 @@ def main():
         )
 
     elif args.command == "generate":
-        print("AI generation mode: coming soon", file=sys.stderr)
-        print(f"(Will generate {args.frames} frames with {args.model})", file=sys.stderr)
-        sys.exit(1)
+        frames_dir = generate_and_save(
+            frames=args.frames,
+            output_dir=args.output,
+        )
+        print(f"\nGenerated frames in {frames_dir}")
+        print(f"Play with: python3 vance_ascii.py play {frames_dir} --fps 12")
 
     elif args.command == "ascii":
         print("Direct ASCII mode: coming soon", file=sys.stderr)
