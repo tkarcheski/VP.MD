@@ -24,6 +24,8 @@ import sys
 import time
 from pathlib import Path
 
+from generators import scrape_youtube
+
 # Lazy imports for optional dependencies
 PIL = None
 CHAFA = None
@@ -162,9 +164,14 @@ def main():
     args = parse_args()
 
     if args.command == "youtube":
-        print("YouTube mode: coming soon", file=sys.stderr)
-        print("(Will scrape storyboards and animate)", file=sys.stderr)
-        sys.exit(1)
+        frames_dir = scrape_youtube(args.url)
+        animate_frames(
+            frames_dir,
+            fps=args.fps,
+            loop=args.loop,
+            width=args.width,
+            charset=args.charset,
+        )
 
     elif args.command == "generate":
         print("AI generation mode: coming soon", file=sys.stderr)
