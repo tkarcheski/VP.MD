@@ -24,7 +24,6 @@ import sys
 import time
 from pathlib import Path
 
-from generators import scrape_youtube
 from generators.ascii_generator import generate_and_save
 
 # Lazy imports for optional dependencies
@@ -179,6 +178,7 @@ def main():
     args = parse_args()
 
     if args.command == "youtube":
+        from generators.youtube_scraper import scrape_youtube
         frames_dir = scrape_youtube(args.url)
         animate_frames(
             frames_dir,

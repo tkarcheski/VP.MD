@@ -197,15 +197,8 @@ def main():
         print(f"Play with: just-dance-vance-terminal play {frames_dir} --fps 12")
 
     elif args.command == "ascii":
-        frames_dir = generate_and_save(
-            frames=30,
-            output_dir="vance_dance_frames",
-        )
-        animate_frames(
-            frames_dir,
-            fps=12,
-            loop=True,
-        )
+        from .interactive import interactive_dance
+        interactive_dance()
 
     elif args.command == "play":
         animate_frames(
