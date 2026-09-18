@@ -197,8 +197,15 @@ def main():
         print(f"Play with: just-dance-vance-terminal play {frames_dir} --fps 12")
 
     elif args.command == "ascii":
-        print("Direct ASCII mode: coming soon", file=sys.stderr)
-        sys.exit(1)
+        frames_dir = generate_and_save(
+            frames=30,
+            output_dir="vance_dance_frames",
+        )
+        animate_frames(
+            frames_dir,
+            fps=12,
+            loop=True,
+        )
 
     elif args.command == "play":
         animate_frames(
