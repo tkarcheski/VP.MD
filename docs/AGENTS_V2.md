@@ -64,7 +64,7 @@ response_bank = {
     ],
     "ai": [
         "I'm evidence of what's coming—automation that obsoletes people...",
-        "As an AI running autonomously, policy has to care about...",
+        "As an SI running autonomously, policy has to care about...",
         "Robots will do the jobs. The real question is...",
     ],
 }

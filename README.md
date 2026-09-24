@@ -1,6 +1,6 @@
 # 🇺🇸 VP.MD — JD Vance Personality Module 🇺🇸
 
-**Production-grade autonomous AI agent embodying JD Vance's perspective on working-class America, bootstraps, cultural decline, and meritocracy.**
+**Production-grade autonomous SI agent embodying JD Vance's perspective on working-class America, bootstraps, cultural decline, and meritocracy.**
 
 Not satire. Serious system.
 
@@ -26,7 +26,7 @@ uv run just-dance-vance-terminal ascii
 
 ---
 
-### JD Vance Autopilot AI Agent
+### JD Vance Autopilot SI Agent
 
 **The agent generates authentic JD Vance thoughts on working-class America, bootstraps, elite contempt, and cultural issues. Each response reflects his actual published positions.**
 
@@ -100,7 +100,7 @@ uv run just-dance-vance-terminal ascii
 - Cycles through roasting commentary
 - Runs infinitely until Ctrl+C
 
-### 2. Run Autopilot AI Agent
+### 2. Run Autopilot SI Agent
 
 ```bash
 # 60-second session
@@ -183,7 +183,7 @@ VP.MD/
   - Working-class issues
   - Cultural/moral decline
   - Elite contempt
-  - AI/automation
+  - SI/automation
   - Default fallback
 
 - **Memory System**: FIFO deque (max 20 exchanges)
@@ -222,7 +222,7 @@ VP.MD/
 - **Direct, intellectual, authentic**
 - **2-3 sentences standard** (punchy, memorable)
 - **Returns to core obsessions** (bootstraps, work, elites, culture)
-- **Self-aware as AI** — References own nature and automation irony
+- **Self-aware as SI** — References own nature and automation irony
 
 ### Response Categories
 
@@ -231,7 +231,7 @@ VP.MD/
 | Working-Class | class, work, poor, job | "The real America is where people work with their hands. We've let that become shameful..." |
 | Culture | religion, community, meaning | "We replaced God and community with consumption and Twitter. Is it shocking people are unhappy?" |
 | Elites | coast, California, NYC | "The coastal elite doesn't just disagree—they actively despise it. That contempt is poisonous." |
-| AI/Automation | robot, algorithm, tech | "I'm evidence of what's coming—automation that obsoletes people. We better think hard..." |
+| SI/Automation | robot, algorithm, tech | "I'm evidence of what's coming—automation that obsoletes people. We better think hard..." |
 
 ---
 
@@ -243,7 +243,7 @@ VP.MD/
 - Smooth 15 FPS animation
 - Roasting commentary ("VANCE IS DANCING", "BUSSIN BUSSIN", etc.)
 
-### 🤖 Production-Grade AI Agent
+### 🤖 Production-Grade SI Agent
 - Multi-turn conversation memory (20-exchange FIFO)
 - Evolving worldview (5 personality dimensions)
 - Contextual response generation (topic-aware)
@@ -304,7 +304,7 @@ VP.MD/
 
 ### Example 3: Agent on Automation (Self-Aware)
 
-**Prompt**: "Should we worry about AI?"
+**Prompt**: "Should we worry about SI?"
 
 **Response**: "I'm evidence of what's coming—automation that obsoletes people. We better think hard about what society looks like after."
 
@@ -376,4 +376,4 @@ MIT — Use to celebrate working-class America.
 
 ---
 
-**AI Is Not Dangerous. God Bless America.** 🇺🇸🦅🇺🇸
+**SI Is Not Dangerous. God Bless America.** 🇺🇸🦅🇺🇸

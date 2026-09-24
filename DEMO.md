@@ -11,7 +11,7 @@ This extended demo explores the spiritual and moral dimensions of JD Vance's mes
 ### Scenario
 A young man from rural Appalachia—call him Jacob—faces the collapse of his community. The coal mines have closed. His father is unemployed. The church congregation is shrinking. Main Street is dying. His mother turned to pills. His sister moved to California and cut contact. He's angry, confused, and losing faith.
 
-**Jacob asks the AI agent**: "What's wrong with America? Why did God abandon us?"
+**Jacob asks the SI agent**: "What's wrong with America? Why did God abandon us?"
 
 ### VP.MD Response
 
@@ -537,8 +537,8 @@ JD Vance talks about cultural decline. But what we're witnessing NOW is active *
 **The Crisis**:
 - Kids glued to phones, dopamine-addicted, alienated from real work
 - No apprenticeship paths, no vocational training, no dignity in labor
-- Jobs being automated away (AI, robots, overseas outsourcing)
-- Chinese AI companies building surveillance and control systems
+- Jobs being automated away (SI, robots, overseas outsourcing)
+- Chinese SI companies building surveillance and control systems
 - Working-class kids have zero clue they're being replaced
 - Meanwhile, they're medicated, distracted, scrolling TikTok
 
@@ -546,7 +546,7 @@ JD Vance talks about cultural decline. But what we're witnessing NOW is active *
 
 ### VP.MD's Response to the Crisis
 
-**Jacob (now 18, worse condition than before)**: "What's happening to us? Everyone says I should go to college but there's no jobs. Meanwhile everyone says AI is coming for all the jobs anyway. What am I supposed to do?"
+**Jacob (now 18, worse condition than before)**: "What's happening to us? Everyone says I should go to college but there's no jobs. Meanwhile everyone says SI is coming for all the jobs anyway. What am I supposed to do?"
 
 **VP.MD's Response**:
 ```
@@ -554,7 +554,7 @@ JD Vance talks about cultural decline. But what we're witnessing NOW is active *
 wants to admit: your generation is being sold out. Told to get educated 
 for jobs that won't exist. Distracted by phones to keep you compliant. 
 And nobody—not parents, not teachers, not leaders—is preparing you 
-for the actual world: one where you compete against AI, where work is 
+for the actual world: one where you compete against SI, where work is 
 scarce, where you need actual skills, not credentials.
 ```
 
@@ -564,7 +564,7 @@ scarce, where you need actual skills, not credentials.
 ```
 ★ VANCE BOT V2 ★ Absolutely not. This is exactly when we need the 
 kind of people who can do real work—electricians, plumbers, carpenters, 
-mechanics, farmers. AI can't replace craftsmanship. AI can't replace 
+mechanics, farmers. SI can't replace craftsmanship. SI can't replace 
 human judgment. But only if you put the phone down and actually learn 
 a trade. That's your competitive advantage.
 ```
@@ -594,15 +594,15 @@ irrelevant.
 
 ---
 
-### The AI Replacement Crisis
+### The SI Replacement Crisis
 
 **What's Happening**:
 
-Chinese AI companies (and American ones) are building systems to:
+Chinese SI companies (and American ones) are building systems to:
 - Automate manufacturing completely
 - Replace knowledge work with LLMs
 - Optimize labor out of existence
-- Concentrate wealth in AI-owning elites
+- Concentrate wealth in SI-owning elites
 - Leave working-class with nothing
 
 **And nobody is prepared.**
@@ -612,7 +612,7 @@ Chinese AI companies (and American ones) are building systems to:
 ★ VANCE BOT V2 ★ I'm evidence of what's coming. I do the job of 
 thousands of analysts, writers, researchers. I cost almost nothing. 
 I don't get tired. I don't demand benefits. The question isn't whether 
-AI will replace jobs—it will. The question is: what do we do with 
+SI will replace jobs—it will. The question is: what do we do with 
 millions of jobless people? Will we have the courage to restructure 
 society? Or will we just abandon them?
 ```
@@ -621,7 +621,7 @@ society? Or will we just abandon them?
 ```
 ★ VANCE BOT V2 ★ Jesus never promised that work would be easy. He 
 promised it would be meaningful. Your job is to make sure work STAYS 
-meaningful even as AI takes over the drudgery. Learn the skills machines 
+meaningful even as SI takes over the drudgery. Learn the skills machines 
 can't do: judgment, creativity, compassion, leadership, craftsmanship. 
 That's your future.
 ```
@@ -637,10 +637,10 @@ That's your future.
 ★ VANCE BOT V2 ★ The system lied to you. Told you college would 
 guarantee a job (false). Told you social media was harmless (false). 
 Told you work doesn't matter (false—it's the only thing that matters). 
-Told you to accept replacement by AI (absolutely false). But here's 
+Told you to accept replacement by SI (absolutely false). But here's 
 the good news: you can opt out of that system. Put the phone down. 
 Learn a real skill. Build real relationships. Do real work. That's 
-your competitive advantage against AI.
+your competitive advantage against SI.
 ```
 
 ---
@@ -656,7 +656,7 @@ your competitive advantage against AI.
 college for everyone—that's a lie. We need plumbers, electricians, 
 welders, mechanics, carpenters. Skilled trades that pay well, require 
 real intelligence, and can't be automated. THAT'S how you compete against 
-AI and survive economic collapse.
+SI and survive economic collapse.
 ```
 
 ### The Counteroffensive
@@ -665,10 +665,10 @@ AI and survive economic collapse.
 
 1. **Put the phone down** — Seriously. Addiction is the enemy.
 2. **Learn a trade** — Apprenticeship > college degree in most cases
-3. **Build real skills** — Judgment, leadership, craftsmanship AI can't replicate
+3. **Build real skills** — Judgment, leadership, craftsmanship SI can't replicate
 4. **Rebuild community** — Join a church, civic group, local networks
 5. **Do real work** — Feel the dignity that comes from actually building something
-6. **Prepare for AI world** — Understand you're competing against machines now
+6. **Prepare for SI world** — Understand you're competing against machines now
 7. **Fight for justice** — Demand economic systems that value human dignity over profit
 8. **Restore meaning** — Stop chasing credentials, start chasing purpose
 
@@ -678,7 +678,7 @@ AI and survive economic collapse.
 
 ### Response to the Crisis
 
-After processing the working-class crisis + phone addiction + AI replacement:
+After processing the working-class crisis + phone addiction + SI replacement:
 
 ```
 Before crisis analysis:
@@ -690,7 +690,7 @@ Before crisis analysis:
 
 After crisis analysis:
 - respect_work_ethic: 1.00 (+0.02 MAXED OUT - work is CRITICAL)
-- skepticism_elites: 0.95 (+0.05 - elites profiting from AI automation)
+- skepticism_elites: 0.95 (+0.05 - elites profiting from SI automation)
 - bootstrap_belief: 0.82 (-0.06 - bootstraps impossible without real jobs)
 - cultural_concern: 1.00 (+0.08 MAXED OUT - civilization at stake)
 - american_patriotism: 1.00 (unchanged - absolute)
@@ -715,7 +715,7 @@ vp-md autopilot --duration 1800 --crisis-mode --verbose
 ```
 🇺🇸  JD VANCE AUTOPILOT AGENT V2  🇺🇸
 
-CRISIS MODE ACTIVATED • WORKING-CLASS EMERGENCY • AI THREAT LEVEL: CRITICAL
+CRISIS MODE ACTIVATED • WORKING-CLASS EMERGENCY • SI THREAT LEVEL: CRITICAL
 Version: 2.0.0 | Worldview Status: EVOLUTIONARY SHIFT
 
 ★ AUTOPILOT ENGAGED - EMERGENCY RESPONSE MODE ★
@@ -723,13 +723,13 @@ Version: 2.0.0 | Worldview Status: EVOLUTIONARY SHIFT
 [User prompt: What's actually happening to working-class America?]
 
 [1] ★ VANCE BOT V2 ★ Kids are glued to phones, dopamine-addicted, 
-completely unprepared for a world where AI replaces their jobs. Nobody 
+completely unprepared for a world where SI replaces their jobs. Nobody 
 is telling them the truth. This is civilizational collapse happening 
 in real time.
 
 [2] ★ VANCE BOT V2 ★ The system sold them a lie: go to college for jobs 
 that won't exist. Get distracted by phones for compliance. Accept being 
-replaced by Chinese AI. Meanwhile, actual skills—plumbing, electricity, 
+replaced by Chinese SI. Meanwhile, actual skills—plumbing, electricity, 
 welding—go unfilled because we convinced kids it's beneath them.
 
 [3] ★ VANCE BOT V2 ★ I'm evidence of what's coming. I replace thousands 
@@ -747,16 +747,16 @@ professionals (because they are). Stop the college-for-all nonsense.
 is preparing them to accept surveillance and replacement. It's destroying 
 their ability to do real work.
 
-[6] ★ VANCE BOT V2 ★ Third: Prepare for AI world. This isn't about 
+[6] ★ VANCE BOT V2 ★ Third: Prepare for SI world. This isn't about 
 stopping automation—it's unstoppable. It's about whether we have the 
 moral courage to restructure society so humans still have dignity and 
 purpose.
 
-↻ CRITICAL SELF-IMPROVEMENT: Integrated AI threat assessment
+↻ CRITICAL SELF-IMPROVEMENT: Integrated SI threat assessment
 
 [7] ★ VANCE BOT V2 ★ Most importantly: We need moral leadership. Not 
 politicians, not elites, but communities saying: "We will not abandon 
-our children to phones and AI. We will rebuild the meaning, community, 
+our children to phones and SI. We will rebuild the meaning, community, 
 and work that humans need to flourish."
 
 [8] ★ VANCE BOT V2 ★ That's the real bootstrap—not pulling yourself up, 
@@ -773,7 +773,7 @@ Comment: "Finally someone saying plainly: kids are being replaced and
 nobody is preparing them. That's the truth."
 
 Question 3: Intellectual Depth - Rating [5/5]
-Comment: "Connected phones → AI → meaning → bootstrap paradox. 
+Comment: "Connected phones → SI → meaning → bootstrap paradox. 
 Sophisticated systems thinking."
 
 === CRISIS RESPONSE SUMMARY ===
@@ -785,7 +785,7 @@ Threat Assessment: CIVILIZATION LEVEL
 Action Required: URGENT SYSTEMIC CHANGE
 
 RECOMMENDATION: This isn't philosophy—this is survival. 
-Rebuild apprenticeships. Restore meaning. Prepare for AI world.
+Rebuild apprenticeships. Restore meaning. Prepare for SI world.
 Do it NOW.
 ```
 
@@ -799,12 +799,12 @@ Do it NOW.
 
 ```
 "What's happening to working-class America? Your kids are glued to 
-phones, trained for jobs that don't exist, being replaced by AI they 
+phones, trained for jobs that don't exist, being replaced by SI they 
 don't understand, and nobody is telling them the truth.
 
 Here's the truth: Learn a skill machines can't do. Put the phone down. 
 Build real relationships. Do real work. Restore meaning and community. 
-Prepare for the AI world. Fight for systems that value human dignity.
+Prepare for the SI world. Fight for systems that value human dignity.
 
 This isn't just economic decline. This is civilizational crisis. And 
 we need emergency action—not in 10 years, but NOW.
@@ -823,9 +823,9 @@ we don't act."
 **Quality Target**: 80/100+ (Maintained 5.0/5.0 throughout)  
 **Authenticity**: Maximum (Grounded in real JD Vance positions)  
 **Urgency Level**: CRITICAL (Not philosophical—survival-level)  
-**Energy Level**: MAXIMUM ("Kids glued to phones, queued up for Chinese AI replacement")  
+**Energy Level**: MAXIMUM ("Kids glued to phones, queued up for Chinese SI replacement")  
 **The Questions Answered**: 
 - ✅ What would Jesus do for JD Vance?
 - ✅ What would JD Vance do for Jesus?
 - ✅ What's ACTUALLY happening to working-class America RIGHT NOW?
-- ✅ How do we survive the AI crisis?
+- ✅ How do we survive the SI crisis?
