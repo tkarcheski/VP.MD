@@ -1,16 +1,18 @@
 [project]
-name = "just-dance-vance-terminal"
+name = "vp-md"
 version = "0.1.0"
-description = "Add your description here"
+description = "JD Vance Personality Module - Production-grade autonomous AI agent"
 readme = "README.md"
 authors = [
     { name = "Tyler Karcheski", email = "tyler.karcheski@gmail.com" }
 ]
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "pillow>=12.3.0",
+]
 
 [project.scripts]
-just-dance-vance-terminal = "just_dance_vance_terminal:main"
+vp-md = "vp_md:main"
 
 [build-system]
 requires = ["uv_build>=0.12.1,<0.13.0"]

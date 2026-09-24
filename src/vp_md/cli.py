@@ -1,20 +1,21 @@
 #!/usr/bin/env python3
 """
-vance_ascii — make fun of DJ Vance with ASCII art animations in your Linux terminal.
+VP.MD — JD Vance Personality Module
 
-Generates or sources dancing DJ Vance frames and animates them in the terminal
-with retro VT-100 vibes (ANSI colors, ASCII art).
+Production-grade autonomous AI agent embodying JD Vance's perspective
+on working-class America, bootstraps, cultural decline, and meritocracy.
 
-Supports multiple frame sources:
-- YouTube storyboard scraping
-- AI-generated frames (unsloth)
-- Direct ASCII art generation
+Supports multiple modes:
+- Dancing ASCII animation with roasting commentary
+- Autonomous AI agent generating contextual responses
+- YouTube storyboard scraping and rendering
+- Quality feedback collection and analysis
 
 Usage:
-    just-dance-vance-terminal youtube --url https://youtube.com/shorts/S2GC9PxDWPI
-    just-dance-vance-terminal generate --frames 30 --ai
-    just-dance-vance-terminal ascii --text "VANCE IS DANCING"
-    just-dance-vance-terminal play frames/ --fps 12 --loop
+    vp-md ascii                                 # Watch Vance dance
+    vp-md autopilot --duration 60              # Run autonomous agent
+    vp-md youtube --url <URL>                  # Scrape YouTube storyboard
+    vp-md play frames/ --fps 12 --loop         # Play existing frames
 
 Press Ctrl+C to stop.
 """
