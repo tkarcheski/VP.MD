@@ -1,6 +1,12 @@
-# 🇺🇸 JD Vance Terminal — Full Autopilot AI 🇺🇸
+# 🇺🇸 VP.MD — JD Vance Autonomous Terminal 🇺🇸
 
 **The most patriotic terminal experience in America.** Watch JD Vance dance in colorized ASCII art. Or engage the autonomous AI agent that runs on pure American energy.
+
+## Demo
+
+![JD Vance Dancing in Terminal](assets/vance_dance.gif)
+
+*Colorized ASCII animation of JD Vance dancing with roasting commentary. 30 frames at 15 FPS.*
 
 ## Features
 
